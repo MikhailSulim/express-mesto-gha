@@ -7,9 +7,9 @@ const { PORT = 3000 } = process.env;
 
 app.use(express.json()); // для взаимодействия с req.body, аналог body-parser
 
-mongoose.connect("mongodb://localhost:27017/mestodb", {
-  useNewUrlParser: true,
-});
+mongoose.connect("mongodb://127.0.0.1:27017/mestodb", {
+  // useNewUrlParser: true,
+}); // с новых версий не обязательно добавлять опции
 
 
 
