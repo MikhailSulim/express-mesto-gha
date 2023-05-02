@@ -1,9 +1,8 @@
 const User = require("../models/user");
 
-// TODO написать статусы
-// TODO написать отлов ошибок
-
-const getUsers = (req, res) => {
+// вариант экспорта контроллеров каждому по отдельности
+exports.getUsers = (req, res) => {
+  // функция получения данных всех пользователей
   User.find({})
     .then((users) => {
       res.send({ data: users });
@@ -11,7 +10,8 @@ const getUsers = (req, res) => {
     .catch((err) => res.status(500).send(err.message("Users not found")));
 };
 
-const getUser = (req, res) => {
+exports.getUser = (req, res) => {
+  // функция получения данных пользователя по идентификатору
   const { userId } = req.params;
   User.findById(userId)
     .orFail()
@@ -27,7 +27,8 @@ const getUser = (req, res) => {
     });
 };
 
-const createUser = (req, res) => {
+exports.createUser = (req, res) => {
+  // функция создания нового пользователя
   const { name, about, avatar } = req.body;
 
   User.create({ name, about, avatar })
@@ -39,4 +40,13 @@ const createUser = (req, res) => {
     });
 };
 
-module.exports = { getUsers, getUser, createUser };
+exports.updateUser = (req, res) => {
+  // функция обновления данных пользователя по иего идентификатору
+  
+};
+
+exports.updateAvatar = (req, res) => {
+  // функция обновления аватара пользователя по его идентификатору
+};
+
+// module.exports = { getUsers, getUser, createUser };
