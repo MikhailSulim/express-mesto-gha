@@ -42,11 +42,22 @@ exports.createUser = (req, res) => {
 
 exports.updateUser = (req, res) => {
   // функция обновления данных пользователя по иего идентификатору
-  
+  const { _id: userId } = req.user;
+  const updateOptions = req.body;
+
+  User.findByIdAndUpdate(userId, updateOptions, { new: true }).then((user) => {
+    res.send(user);
+  });
 };
 
 exports.updateAvatar = (req, res) => {
   // функция обновления аватара пользователя по его идентификатору
+  const { _id: userId } = req.user;
+  const updateOptions = req.body;
+
+  User.findByIdAndUpdate(userId, updateOptions, { new: true }).then((user) => {
+    res.send(user);
+  });
 };
 
 // module.exports = { getUsers, getUser, createUser };
