@@ -47,20 +47,31 @@ const deleteCard = (req, res) => {
 
 const likeCard = (req, res) => {
   // функция поставить лайк карточке по её идентификатору
+  const { _id: userId } = req.user;
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $addToSet: { likes: req.user._id } }, // добавить _id в массив, если его там нет
+    { $addToSet: { likes: userId } }, // добавить _id в массив, если его там нет
     { new: true }
-  );
+  )
+    .orFail()
+    .then((card) => card.populate(["owner", "likes"]))
+    .then((card) => res.send(card))
+    .catch();
 };
 
 const dislikeCard = (req, res) => {
   // функция снять лайк карточке по её идентификатору
+  const { _id: userId } = req.user;
   Card.findByIdAndUpdate(
     req.params.cardId,
-    { $pull: { likes: req.user._id } }, // убрать _id из массива
+    { $pull: { likes: userId } }, // убрать _id из массива
     { new: true }
-  );
+  )
+    .orFail()
+    .then((card) => card.populate(["owner", "likes"]))
+    .then((card) => res.send(card))
+    .catch();
 };
 
 module.exports = { getCards, createCard, deleteCard, likeCard, dislikeCard };
+

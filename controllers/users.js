@@ -45,9 +45,10 @@ exports.updateUser = (req, res) => {
   const { _id: userId } = req.user;
   const updateOptions = req.body;
 
-  User.findByIdAndUpdate(userId, updateOptions, { new: true }).then((user) => {
-    res.send(user);
-  });
+  User.findByIdAndUpdate(userId, updateOptions, { new: true })
+    .orFail()
+    .then((user) => res.send(user))
+    .catch();
 };
 
 exports.updateAvatar = (req, res) => {
@@ -55,9 +56,15 @@ exports.updateAvatar = (req, res) => {
   const { _id: userId } = req.user;
   const updateOptions = req.body;
 
-  User.findByIdAndUpdate(userId, updateOptions, { new: true }).then((user) => {
-    res.send(user);
-  });
+  User.findByIdAndUpdate(userId, updateOptions, { new: true })
+    .orFail()
+    .then((user) => res.send(user))
+    .catch();
 };
 
 // module.exports = { getUsers, getUser, createUser };
+
+// TODO написать отлов ошибок для всех функций
+
+
+
