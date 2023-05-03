@@ -1,6 +1,6 @@
 [![Tests](../../actions/workflows/tests-13-sprint.yml/badge.svg)](../../actions/workflows/tests-13-sprint.yml) [![Tests](../../actions/workflows/tests-14-sprint.yml/badge.svg)](../../actions/workflows/tests-14-sprint.yml)
 # Проект Mesto фронтенд + бэкенд
-
+Проектная работа выполнена в рамках обучения в ЯПрактикуме, спринт 14.
 
 ## Директории
 
@@ -14,3 +14,9 @@
 
 `npm run start` — запускает сервер   
 `npm run dev` — запускает сервер с hot-reload
+
+## Репозиторий проекта
+[Ссылка на репозиторий](https://github.com/MikhailSulim/express-mesto-gha)
+
+## Чеклист для самопроверки
+[Ссылка на чеклист](https://code.s3.yandex.net/web-developer/checklists-pdf/new-program/checklist_13.pdf)
