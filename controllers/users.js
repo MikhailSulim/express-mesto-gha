@@ -7,7 +7,11 @@ exports.getUsers = (req, res) => {
     .then((users) => {
       res.send({ data: users });
     })
-    .catch((err) => res.status(500).send(err.message("Users not found")));
+    .catch((err) =>
+      res.status(500).send({
+        message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
+      })
+    );
 };
 
 exports.getUser = (req, res) => {
@@ -20,9 +24,11 @@ exports.getUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === "CastError") {
-        res.status(404).send(err.message);
+        res.status(404).send({ message: "Пользователь с таким id не найден" });
       } else {
-        res.status(500).send({ message: "Something went wrong" });
+        res.status(500).send({
+          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
+        });
       }
     });
 };
@@ -36,7 +42,18 @@ exports.createUser = (req, res) => {
       res.status(201).send(user);
     })
     .catch((err) => {
-      res.status(500).send({ message: "User wasn't create" });
+      if (err.name === "ValidationError") {
+        const errorMessage = Object.values(err.errors)
+          .map((err) => err.message)
+          .join(" ");
+        res.status(400).send({
+          message: `Некорректные данные пользователя: ${errorMessage}`,
+        });
+      } else {
+        res.status(500).send({
+          message: `На сервере произошла ошибка: ${err.name} ${errorMessage}`,
+        });
+      }
     });
 };
 
@@ -45,10 +62,38 @@ exports.updateUser = (req, res) => {
   const { _id: userId } = req.user;
   const updateOptions = req.body;
 
-  User.findByIdAndUpdate(userId, updateOptions, { new: true })
+  User.findByIdAndUpdate(
+    userId, // идентификатор в строковом виде
+    updateOptions, // объект со свойствами, которые нужно обновить
+    {
+      // объект опций
+      // new	передать обновлённый объект на вход обработчику then	(по ум. false)
+      // runValidators	валидировать новые данные пе-ред записью в базу	(по ум. false)
+      // upsert	если документ не найден, создать его	(по ум. false)
+      new: true,
+      runValidators: true,
+    }
+  )
     .orFail()
     .then((user) => res.send(user))
-    .catch();
+    .catch((err) => {
+      if (err.name === "CastError") {
+        res.status(404).send({ message: "Пользователя с данным id не найден" });
+        return;
+      }
+      if (err.name === "ValidationError") {
+        const errorMessage = Object.values(err.errors)
+          .map((err) => err.message)
+          .join(" ");
+        res.status(400).send({
+          message: `Некорректные данные пользователя при обновлении профиля ${errorMessage}`,
+        });
+      } else {
+        res.status(500).send({
+          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
+        });
+      }
+    });
 };
 
 exports.updateAvatar = (req, res) => {
@@ -56,15 +101,28 @@ exports.updateAvatar = (req, res) => {
   const { _id: userId } = req.user;
   const updateOptions = req.body;
 
-  User.findByIdAndUpdate(userId, updateOptions, { new: true })
+  User.findByIdAndUpdate(userId, updateOptions, {
+    new: true,
+    runValidators: true,
+  })
     .orFail()
     .then((user) => res.send(user))
-    .catch();
+    .catch((err) => {
+      if (err.name === "CastError") {
+        res.status(404).send({ message: "Пользователя с данным id не найден" });
+        return;
+      }
+      if (err.name === "ValidationError") {
+        const errorMessage = Object.values(err.errors)
+          .map((err) => err.message)
+          .join(" ");
+        res.status(400).send({
+          message: `Некорректные данные пользователя при обновлении профиля ${errorMessage}`,
+        });
+      } else {
+        res.status(500).send({
+          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
+        });
+      }
+    });
 };
-
-// module.exports = { getUsers, getUser, createUser };
-
-// TODO написать отлов ошибок для всех функций
-
-
-
