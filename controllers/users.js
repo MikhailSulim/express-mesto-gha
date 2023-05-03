@@ -1,4 +1,10 @@
 const User = require("../models/user");
+const {
+  CREATED_CODE,
+  BAD_REQUEST_CODE,
+  NOT_FOUND_CODE,
+  INTERNAL_SERVER_ERROR_CODE,
+} = require("../utils/constants");
 
 // вариант экспорта контроллеров каждому по отдельности
 exports.getUsers = (req, res) => {
@@ -8,7 +14,7 @@ exports.getUsers = (req, res) => {
       res.send({ data: users });
     })
     .catch((err) =>
-      res.status(500).send({
+      res.status(INTERNAL_SERVER_ERROR_CODE).send({
         message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
       })
     );
@@ -24,9 +30,11 @@ exports.getUser = (req, res) => {
     })
     .catch((err) => {
       if (err.name === "CastError") {
-        res.status(404).send({ message: "Пользователь с таким id не найден" });
+        res
+          .status(NOT_FOUND_CODE)
+          .send({ message: "Пользователь с таким id не найден" });
       } else {
-        res.status(500).send({
+        res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
         });
       }
@@ -39,18 +47,18 @@ exports.createUser = (req, res) => {
 
   User.create({ name, about, avatar })
     .then((user) => {
-      res.status(201).send(user);
+      res.status(CREATED_CODE).send(user);
     })
     .catch((err) => {
       if (err.name === "ValidationError") {
         const errorMessage = Object.values(err.errors)
           .map((err) => err.message)
           .join(" ");
-        res.status(400).send({
+        res.status(BAD_REQUEST_CODE).send({
           message: `Некорректные данные пользователя: ${errorMessage}`,
         });
       } else {
-        res.status(500).send({
+        res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${errorMessage}`,
         });
       }
@@ -78,18 +86,20 @@ exports.updateUser = (req, res) => {
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === "CastError") {
-        res.status(404).send({ message: "Пользователя с данным id не найден" });
+        res
+          .status(NOT_FOUND_CODE)
+          .send({ message: "Пользователя с данным id не найден" });
         return;
       }
       if (err.name === "ValidationError") {
         const errorMessage = Object.values(err.errors)
           .map((err) => err.message)
           .join(" ");
-        res.status(400).send({
+        res.status(BAD_REQUEST_CODE).send({
           message: `Некорректные данные пользователя при обновлении профиля ${errorMessage}`,
         });
       } else {
-        res.status(500).send({
+        res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
         });
       }
@@ -109,18 +119,20 @@ exports.updateAvatar = (req, res) => {
     .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === "CastError") {
-        res.status(404).send({ message: "Пользователя с данным id не найден" });
+        res
+          .status(NOT_FOUND_CODE)
+          .send({ message: "Пользователя с данным id не найден" });
         return;
       }
       if (err.name === "ValidationError") {
         const errorMessage = Object.values(err.errors)
           .map((err) => err.message)
           .join(" ");
-        res.status(400).send({
+        res.status(BAD_REQUEST_CODE).send({
           message: `Некорректные данные пользователя при обновлении профиля ${errorMessage}`,
         });
       } else {
-        res.status(500).send({
+        res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
         });
       }

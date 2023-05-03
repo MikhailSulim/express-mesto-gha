@@ -1,4 +1,10 @@
 const Card = require("../models/card");
+const {
+  CREATED_CODE,
+  BAD_REQUEST_CODE,
+  NOT_FOUND_CODE,
+  INTERNAL_SERVER_ERROR_CODE,
+} = require("../utils/constants");
 
 // вариант экспорта контроллеров всех сразу в конце
 const getCards = (req, res) => {
@@ -7,7 +13,7 @@ const getCards = (req, res) => {
     .populate(["owner", "likes"]) // чтобы получить всю информацию об авторе
     .then((cards) => res.send({ data: cards }))
     .catch((err) =>
-      res.status(500).send({
+      res.status(INTERNAL_SERVER_ERROR_CODE).send({
         message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
       })
     );
@@ -20,17 +26,17 @@ const createCard = (req, res) => {
 
   Card.create({ name, link, owner: userId })
     .then((card) => card.populate("owner"))
-    .then((card) => res.status(201).send(card)) // возврат записанных в базу данных
+    .then((card) => res.status(CREATED_CODE).send(card)) // возврат записанных в базу данных
     .catch((err) => {
       if (err.name === "ValidationError") {
         const errorMessage = Object.values(err.errors)
           .map((err) => err.message)
           .join(" ");
         res
-          .status(400)
+          .status(BAD_REQUEST_CODE)
           .send({ message: `Некорректные данные карточки: ${errorMessage}` });
       } else {
-        res.status(500).send({
+        res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${errorMessage}`,
         });
       }
@@ -45,9 +51,11 @@ const deleteCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === "CastError") {
-        res.status(404).send({ message: "Карточка с данным id не найдена" });
+        res
+          .status(NOT_FOUND_CODE)
+          .send({ message: "Карточка с данным id не найдена" });
       } else {
-        res.status(500).send({
+        res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
         });
       }
@@ -67,9 +75,11 @@ const likeCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === "CastError") {
-        res.status(404).send({ message: "Передан id несуществующей карточки" });
+        res
+          .status(NOT_FOUND_CODE)
+          .send({ message: "Передан id несуществующей карточки" });
       } else {
-        res.status(500).send({
+        res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
         });
       }
@@ -89,9 +99,11 @@ const dislikeCard = (req, res) => {
     .then((card) => res.send(card))
     .catch((err) => {
       if (err.name === "CastError") {
-        res.status(404).send({ message: "Передан id несуществующей карточки" });
+        res
+          .status(NOT_FOUND_CODE)
+          .send({ message: "Передан id несуществующей карточки" });
       } else {
-        res.status(500).send({
+        res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
         });
       }
