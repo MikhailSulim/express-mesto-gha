@@ -27,10 +27,16 @@ exports.getUser = (req, res) => {
       res.send({ data: user });
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'DocumentNotFoundError') {
         res
           .status(NOT_FOUND_CODE)
           .send({ message: 'Пользователь с таким id не найден' });
+        return;
+      }
+      if (err.name === 'CastError') {
+        res
+          .status(BAD_REQUEST_CODE)
+          .send({ message: 'Некорректный id пользователя' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
@@ -83,7 +89,7 @@ exports.updateUser = (req, res) => {
     .orFail()
     .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'DocumentNotFoundError') {
         res
           .status(NOT_FOUND_CODE)
           .send({ message: 'Пользователя с данным id не найден' });
@@ -96,6 +102,10 @@ exports.updateUser = (req, res) => {
         res.status(BAD_REQUEST_CODE).send({
           message: `Некорректные данные пользователя при обновлении профиля ${errorMessage}`,
         });
+        return;
+      }
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST_CODE).send({ message: 'Некорректный id пользователя' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
@@ -116,7 +126,7 @@ exports.updateAvatar = (req, res) => {
     .orFail()
     .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'DocumentNotFoundError') {
         res
           .status(NOT_FOUND_CODE)
           .send({ message: 'Пользователя с данным id не найден' });
@@ -129,6 +139,10 @@ exports.updateAvatar = (req, res) => {
         res.status(BAD_REQUEST_CODE).send({
           message: `Некорректные данные пользователя при обновлении профиля ${errorMessage}`,
         });
+        return;
+      }
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST_CODE).send({ message: 'Некорректный id пользователя' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,

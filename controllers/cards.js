@@ -48,10 +48,14 @@ const deleteCard = (req, res) => {
     .orFail()
     .then((card) => res.send(card))
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'DocumentNotFoundError') {
         res
           .status(NOT_FOUND_CODE)
           .send({ message: 'Карточка с данным id не найдена' });
+        return;
+      }
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST_CODE).send({ message: 'Некорректный id карточки' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
@@ -72,10 +76,14 @@ const likeCard = (req, res) => {
     .then((card) => card.populate(['owner', 'likes']))
     .then((card) => res.send(card))
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'DocumentNotFoundError') {
         res
           .status(NOT_FOUND_CODE)
           .send({ message: 'Передан id несуществующей карточки' });
+        return;
+      }
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST_CODE).send({ message: 'Передан некорректный id карточки' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
@@ -96,10 +104,14 @@ const dislikeCard = (req, res) => {
     .then((card) => card.populate(['owner', 'likes']))
     .then((card) => res.send(card))
     .catch((err) => {
-      if (err.name === 'CastError') {
+      if (err.name === 'DocumentNotFoundError') {
         res
           .status(NOT_FOUND_CODE)
           .send({ message: 'Передан id несуществующей карточки' });
+        return;
+      }
+      if (err.name === 'CastError') {
+        res.status(BAD_REQUEST_CODE).send({ message: 'Передан некорректный id карточки' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,

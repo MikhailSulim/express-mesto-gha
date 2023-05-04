@@ -7,6 +7,8 @@ const userRouter = require('./routes/users');
 
 const cardRouter = require('./routes/cards');
 
+const { NOT_FOUND_CODE } = require('./utils/constants');
+
 const { PORT = 3000 } = process.env;
 
 app.use(express.json()); // для взаимодействия с req.body, аналог body-parser
@@ -26,6 +28,10 @@ mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
 
 app.use(userRouter);
 app.use(cardRouter);
+
+app.use('*', (req, res) => {
+  res.status(NOT_FOUND_CODE).send({ message: 'Запрашиваемый URL не существует' });
+});
 
 app.listen(PORT, () => {
   console.log(`Server started on port ${PORT}`);
