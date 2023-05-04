@@ -1,4 +1,6 @@
+const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
 const User = require('../models/user');
+
 const {
   CREATED_CODE,
   BAD_REQUEST_CODE,
@@ -27,13 +29,13 @@ exports.getUser = (req, res) => {
       res.send({ data: user });
     })
     .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
+      if (err instanceof DocumentNotFoundError) {
         res
           .status(NOT_FOUND_CODE)
           .send({ message: 'Пользователь с таким id не найден' });
         return;
       }
-      if (err.name === 'CastError') {
+      if (err instanceof CastError) {
         res
           .status(BAD_REQUEST_CODE)
           .send({ message: 'Некорректный id пользователя' });
@@ -54,7 +56,7 @@ exports.createUser = (req, res) => {
       res.status(CREATED_CODE).send(user);
     })
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err instanceof ValidationError) {
         const errorMessage = Object.values(err.errors)
           .map((error) => error.message)
           .join(' ');
@@ -69,43 +71,29 @@ exports.createUser = (req, res) => {
     });
 };
 
-exports.updateUser = (req, res) => {
-  // функция обновления данных пользователя по иего идентификатору
+const updateProfile = (req, res, updData) => {
   const { _id: userId } = req.user;
-  const updateOptions = req.body;
 
-  User.findByIdAndUpdate(
-    userId, // идентификатор в строковом виде
-    updateOptions, // объект со свойствами, которые нужно обновить
-    {
-      // объект опций
-      // new передать обновлённый объект на вход обработчику then (по ум. false)
-      // runValidators валидировать новые данные пе-ред записью в базу (по ум. false)
-      // upsert если документ не найден, создать его (по ум. false)
-      new: true,
-      runValidators: true,
-    },
-  )
+  User.findByIdAndUpdate(userId, updData, {
+    new: true,
+    runValidators: true,
+  })
     .orFail()
     .then((user) => res.send(user))
     .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
+      if (err instanceof DocumentNotFoundError) {
         res
           .status(NOT_FOUND_CODE)
           .send({ message: 'Пользователя с данным id не найден' });
         return;
       }
-      if (err.name === 'ValidationError') {
+      if (err instanceof ValidationError) {
         const errorMessage = Object.values(err.errors)
           .map((error) => error.message)
           .join(' ');
         res.status(BAD_REQUEST_CODE).send({
           message: `Некорректные данные пользователя при обновлении профиля ${errorMessage}`,
         });
-        return;
-      }
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST_CODE).send({ message: 'Некорректный id пользователя' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
@@ -114,39 +102,14 @@ exports.updateUser = (req, res) => {
     });
 };
 
+exports.updateUser = (req, res) => {
+  // функция обновления данных пользователя по его идентификатору
+  const { name, about } = req.body;
+  updateProfile(req, res, { name, about });
+};
+
 exports.updateAvatar = (req, res) => {
   // функция обновления аватара пользователя по его идентификатору
-  const { _id: userId } = req.user;
-  const updateOptions = req.body;
-
-  User.findByIdAndUpdate(userId, updateOptions, {
-    new: true,
-    runValidators: true,
-  })
-    .orFail()
-    .then((user) => res.send(user))
-    .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
-        res
-          .status(NOT_FOUND_CODE)
-          .send({ message: 'Пользователя с данным id не найден' });
-        return;
-      }
-      if (err.name === 'ValidationError') {
-        const errorMessage = Object.values(err.errors)
-          .map((error) => error.message)
-          .join(' ');
-        res.status(BAD_REQUEST_CODE).send({
-          message: `Некорректные данные пользователя при обновлении профиля ${errorMessage}`,
-        });
-        return;
-      }
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST_CODE).send({ message: 'Некорректный id пользователя' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR_CODE).send({
-          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-        });
-      }
-    });
+  const { avatar } = req.body;
+  updateProfile(req, res, { avatar });
 };

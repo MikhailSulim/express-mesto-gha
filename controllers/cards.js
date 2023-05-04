@@ -1,3 +1,4 @@
+const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
 const Card = require('../models/card');
 const {
   CREATED_CODE,
@@ -26,7 +27,7 @@ const createCard = (req, res) => {
     .then((card) => card.populate('owner'))
     .then((card) => res.status(CREATED_CODE).send(card)) // возврат записанных в базу данных
     .catch((err) => {
-      if (err.name === 'ValidationError') {
+      if (err instanceof ValidationError) {
         const errorMessage = Object.values(err.errors)
           .map((error) => error.message)
           .join(' ');
@@ -48,14 +49,36 @@ const deleteCard = (req, res) => {
     .orFail()
     .then((card) => res.send(card))
     .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
+      if (err instanceof DocumentNotFoundError) {
         res
           .status(NOT_FOUND_CODE)
           .send({ message: 'Карточка с данным id не найдена' });
         return;
       }
-      if (err.name === 'CastError') {
+      if (err instanceof CastError) {
         res.status(BAD_REQUEST_CODE).send({ message: 'Некорректный id карточки' });
+      } else {
+        res.status(INTERNAL_SERVER_ERROR_CODE).send({
+          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
+        });
+      }
+    });
+};
+
+const handleLikeCard = (req, res, likeOptions) => {
+  Card.findByIdAndUpdate(req.params.cardId, likeOptions, { new: true })
+    .orFail()
+    .then((card) => card.populate(['owner', 'likes']))
+    .then((card) => res.send(card))
+    .catch((err) => {
+      if (err instanceof DocumentNotFoundError) {
+        res
+          .status(NOT_FOUND_CODE)
+          .send({ message: 'Передан id несуществующей карточки' });
+        return;
+      }
+      if (err instanceof CastError) {
+        res.status(BAD_REQUEST_CODE).send({ message: 'Передан некорректный id карточки' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
@@ -67,57 +90,17 @@ const deleteCard = (req, res) => {
 const likeCard = (req, res) => {
   // функция поставить лайк карточке по её идентификатору
   const { _id: userId } = req.user;
-  Card.findByIdAndUpdate(
-    req.params.cardId,
-    { $addToSet: { likes: userId } }, // добавить _id в массив, если его там нет
-    { new: true },
-  )
-    .orFail()
-    .then((card) => card.populate(['owner', 'likes']))
-    .then((card) => res.send(card))
-    .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
-        res
-          .status(NOT_FOUND_CODE)
-          .send({ message: 'Передан id несуществующей карточки' });
-        return;
-      }
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST_CODE).send({ message: 'Передан некорректный id карточки' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR_CODE).send({
-          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-        });
-      }
-    });
+  const likeOptions = { $addToSet: { likes: userId } }; // добавить _id в массив, если его там нет
+
+  handleLikeCard(req, res, likeOptions);
 };
 
 const dislikeCard = (req, res) => {
   // функция снять лайк карточке по её идентификатору
   const { _id: userId } = req.user;
-  Card.findByIdAndUpdate(
-    req.params.cardId,
-    { $pull: { likes: userId } }, // убрать _id из массива
-    { new: true }, // обработчик then получит на вход обновлённую запись
-  )
-    .orFail()
-    .then((card) => card.populate(['owner', 'likes']))
-    .then((card) => res.send(card))
-    .catch((err) => {
-      if (err.name === 'DocumentNotFoundError') {
-        res
-          .status(NOT_FOUND_CODE)
-          .send({ message: 'Передан id несуществующей карточки' });
-        return;
-      }
-      if (err.name === 'CastError') {
-        res.status(BAD_REQUEST_CODE).send({ message: 'Передан некорректный id карточки' });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR_CODE).send({
-          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-        });
-      }
-    });
+  const likeOptions = { $pull: { likes: userId } }; // убрать _id из массива
+
+  handleLikeCard(req, res, likeOptions);
 };
 
 module.exports = {
