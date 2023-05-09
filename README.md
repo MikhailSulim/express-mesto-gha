@@ -18,5 +18,6 @@
 ## Репозиторий проекта
 [Ссылка на репозиторий](https://github.com/MikhailSulim/express-mesto-gha)
 
-## Чеклист для самопроверки
-[Ссылка на чеклист](https://code.s3.yandex.net/web-developer/checklists-pdf/new-program/checklist_13.pdf)
+## Ссылки на чеклисты для самопроверки
+[Чеклист работы 13 спринта](https://code.s3.yandex.net/web-developer/checklists-pdf/new-program/checklist_13.pdf)
+[Чеклист работы 14 спринта](https://code.s3.yandex.net/web-developer/checklists-pdf/new-program/checklist_14.pdf)

@@ -1,5 +1,7 @@
 const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
 const User = require('../models/user');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const {
   CREATED_CODE,
@@ -49,26 +51,28 @@ exports.getUser = (req, res) => {
 
 exports.createUser = (req, res) => {
   // функция создания нового пользователя
-  const { name, about, avatar } = req.body;
-
-  User.create({ name, about, avatar })
-    .then((user) => {
-      res.status(CREATED_CODE).send(user);
-    })
-    .catch((err) => {
-      if (err instanceof ValidationError) {
-        const errorMessage = Object.values(err.errors)
-          .map((error) => error.message)
-          .join(' ');
-        res.status(BAD_REQUEST_CODE).send({
-          message: `Некорректные данные пользователя: ${errorMessage}`,
-        });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR_CODE).send({
-          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-        });
-      }
-    });
+  const { name, about, avatar, email, password } = req.body;
+  // хешируем пароль
+  bcrypt.hash(password, 10).then(hash =>
+    User.create({ name, about, avatar, email, password: hash })
+      .then((user) => {
+        res.status(CREATED_CODE).send(user);
+      })
+      .catch((err) => {
+        if (err instanceof ValidationError) {
+          const errorMessage = Object.values(err.errors)
+            .map((error) => error.message)
+            .join(' ');
+          res.status(BAD_REQUEST_CODE).send({
+            message: `Некорректные данные пользователя: ${errorMessage}`,
+          });
+        } else {
+          res.status(INTERNAL_SERVER_ERROR_CODE).send({
+            message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
+          });
+        }
+      })
+  );
 };
 
 const updateProfile = (req, res, updData) => {
@@ -112,4 +116,31 @@ exports.updateAvatar = (req, res) => {
   // функция обновления аватара пользователя по его идентификатору
   const { avatar } = req.body;
   updateProfile(req, res, { avatar });
+};
+
+
+exports.login = (req, res) => {
+  const { email, password } = req.body;
+
+  return User.findUserByCredentials(email, password)
+    .then(user => {
+      // создадим токен
+      const token = jwt.sign(
+        {_id: user._id}, // пейлоуд токена
+        'some-secret-key', // секретный ключ подписи
+        { expiresIn: '7d' } // токен будет просрочен через 7 дней
+      );
+
+      res.cookie('jwt', token, {
+        maxAge: 3600000*7*24,
+        httpOnly: true,
+        sameSite: true,
+      }).send({token});
+    }).catch(err => {
+      res.status(401).send({message: err.message});
+  });
+
+  // Метод bcrypt.compare работает асинхронно,
+  // поэтому результат нужно вернуть и обра-ботать в следующем then.
+  // Если хеши совпали, в следующий then придёт true, иначе — false:
 };
