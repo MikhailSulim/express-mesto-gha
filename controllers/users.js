@@ -149,3 +149,12 @@ exports.login = (req, res) => {
   // поэтому результат нужно вернуть и обработать в следующем then.
   // Если хеши совпали, в следующий then придёт true, иначе — false:
 };
+
+exports.getCurrentUser = (req, res, next) => {
+  // функция получения данных о текущем пользователе
+  const userId = req.user._id;
+
+  User.findById(userId)
+    .then((user) => res.send(user))
+    .catch(next);
+};

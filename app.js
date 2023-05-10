@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 const userRouter = require('./routes/users');
 
 const cardRouter = require('./routes/cards');
+const auth = require('./middlewares/auth');
 
 const { NOT_FOUND_CODE } = require('./utils/constants');
 const { createUser } = require('./controllers/users');

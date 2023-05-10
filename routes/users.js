@@ -7,11 +7,14 @@ const {
   //createUser,
   updateUser,
   updateAvatar,
+  getCurrentUser,
 } = require('../controllers/users');
 
 userRouter.get('/users', getUsers); // возвращает всех пользователей
 
+userRouter.get('/users/me', getCurrentUser); // возвращает данные текущего пользователя
 userRouter.get('/users/:userId', getUser); // возвращает пользователя по _id
+
 
 //userRouter.post('/users', createUser); // создаёт пользователя
 
