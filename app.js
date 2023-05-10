@@ -8,6 +8,8 @@ const userRouter = require('./routes/users');
 const cardRouter = require('./routes/cards');
 
 const { NOT_FOUND_CODE } = require('./utils/constants');
+const { createUser } = require('./controllers/users');
+const { login } = require('./controllers/users');
 
 const { PORT = 3000 } = process.env;
 
@@ -28,6 +30,9 @@ mongoose.connect('mongodb://127.0.0.1:27017/mestodb', {
 
 app.use(userRouter);
 app.use(cardRouter);
+
+app.post('/signin', login);
+app.post('/signup', createUser);
 
 app.use('*', (req, res) => {
   res.status(NOT_FOUND_CODE).send({ message: 'Запрашиваемый URL не существует' });
