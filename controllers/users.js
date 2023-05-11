@@ -4,6 +4,8 @@ const User = require('../models/user');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
+const { JWT_SECRET } = require('../utils/config');
+
 const {
   CREATED_CODE,
   BAD_REQUEST_CODE,
@@ -129,10 +131,9 @@ exports.login = (req, res) => {
       // создадим токен
       const token = jwt.sign(
         { _id: user._id }, // пейлоуд токена
-        'some-secret-key', // секретный ключ подписи
+        JWT_SECRET, // секретный ключ подписи
         { expiresIn: '7d' } // токен будет просрочен через 7 дней
       );
-
       res
         .cookie('jwt', token, {
           maxAge: 3600000,
@@ -145,9 +146,9 @@ exports.login = (req, res) => {
       res.status(401).send({ message: err.message });
     });
 
-  // Метод bcrypt.compare работает асинхронно,
-  // поэтому результат нужно вернуть и обработать в следующем then.
-  // Если хеши совпали, в следующий then придёт true, иначе — false:
+  /* Метод bcrypt.compare работает асинхронно,
+  поэтому результат нужно вернуть и обработать в следующем then.
+  Если хеши совпали, в следующий then придёт true, иначе — false: */
 };
 
 exports.getCurrentUser = (req, res, next) => {

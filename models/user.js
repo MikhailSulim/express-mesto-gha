@@ -55,29 +55,25 @@ const userSchema = new mongoose.Schema(
     versionKey: false,
   } // отключение оправления пароля при регистрации и создания поля _v
 );
-// метод findUserByCredentials, который принимает на вход два параметра — почту и пароль
-// — и возвращает объект пользователя или ошибку.
-userSchema.statics.findUserByCredentials = function (email, password) {
-  // попытаемся найти пользователя по почте
-  // Функция findUserByCredentials не должна быть стрелочной.
-  // Это сделано, чтобы мы могли пользоваться this.
-  // Иначе оно было бы задано статически, ведь стрелочные функции запоминают значение this при объявлении.
-  // Осталось добавить обработку ошибки, когда хеши не совпадают.
-  // Опишем этот код в ещё одном обработчике then.
 
-  return this.findOne({ email })
-    .select('+password') // this — это модель User
+// метод findUserByCredentials
+userSchema.statics.findUserByCredentials = function (email, password) {
+  // принимает на вход два параметра — почту и пароль, возвращает объект пользователя или ошибку.
+  /* Функция findUserByCredentials не должна быть стрелочной.
+   Это сделано, чтобы мы могли пользоваться this. */
+
+  // попытаемся найти пользователя по почте
+  return this.findOne({ email }) // this — это модель User
+    .select('+password')
     .then((user) => {
       // не нашёлся — отклоняем промис
       if (!user) {
         return Promise.reject(new Error('Неправильные почта или пароль'));
       }
-
       // нашёлся — сравниваем хеши
-      return bcrypt.compare(password, user.password)
-        .then((matched) => {
-          if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
+      return bcrypt.compare(password, user.password).then((matched) => {
+        if (!matched) {
+          return Promise.reject(new Error('Неправильные почта или пароль'));
         }
         return user;
       });

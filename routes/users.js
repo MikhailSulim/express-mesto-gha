@@ -17,8 +17,6 @@ userRouter.get('/users/me', auth, getCurrentUser); // возвращает да�
 
 userRouter.get('/users/:userId', auth, getUser); // возвращает пользователя по _id
 
-//  userRouter.post('/users', createUser); // создаёт пользователя
-
 userRouter.patch('/users/me', auth, updateUser); // обновляет профиль
 
 userRouter.patch('/users/me/avatar', auth, updateAvatar); // обновляет аватар

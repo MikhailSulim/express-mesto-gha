@@ -12,7 +12,7 @@ const {
 
 cardRouter.get('/cards', auth, getCards); // возвращает все карточки
 
-cardRouter.post('/cards', createCard); // создаёт карточку
+cardRouter.post('/cards', auth, createCard); // создаёт карточку
 
 cardRouter.delete('/cards/:cardId', auth, deleteCard); // удаляет карточку по идентификатору
 
