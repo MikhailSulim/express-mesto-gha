@@ -1,6 +1,9 @@
 // схема и модель данных о карточке для записи в БД
 const mongoose = require('mongoose');
 
+// валидатор url
+const isUrl = require('validator/lib/isURL');
+
 // создаём схему
 const cardSchema = new mongoose.Schema(
   {
@@ -15,6 +18,10 @@ const cardSchema = new mongoose.Schema(
       // ссылка на картинку, строка, обязательно поле
       type: String,
       required: [true, 'необходимо задать ссылку на картинку'],
+      validate: {
+        validator: (link) => isUrl(link),
+        message: 'ссылка на изображение не валидна',
+      },
     },
     owner: {
       // ссылка на модель автора карточки, тип ObjectId, обязательное поле
@@ -35,7 +42,7 @@ const cardSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { versionKey: false },
+  { versionKey: false } // отключить создание поля _v
 );
 
 // создаём модель

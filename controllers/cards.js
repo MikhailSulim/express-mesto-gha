@@ -1,4 +1,5 @@
-const { DocumentNotFoundError, CastError, ValidationError } = require('mongoose').Error;
+const { DocumentNotFoundError, CastError, ValidationError } =
+  require('mongoose').Error;
 const Card = require('../models/card');
 const {
   CREATED_CODE,
@@ -13,56 +14,107 @@ const getCards = (req, res) => {
   Card.find({})
     .populate(['owner', 'likes']) // чтобы получить всю информацию об авторе
     .then((cards) => res.send({ data: cards }))
-    .catch((err) => res.status(INTERNAL_SERVER_ERROR_CODE).send({
-      message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-    }));
+    .catch((err) =>
+      res.status(INTERNAL_SERVER_ERROR_CODE).send({
+        message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
+      })
+    );
 };
 
-const createCard = (req, res) => {
-  // функция создания карточки
-  const { name, link } = req.body;
-  const { _id: userId } = req.user;
+// const createCard = (req, res) => {
+//   // функция создания карточки
+//   const { name, link } = req.body;
+//   const { _id: userId } = req.user;
 
-  Card.create({ name, link, owner: userId })
-    .then((card) => card.populate('owner'))
-    .then((card) => res.status(CREATED_CODE).send(card)) // возврат записанных в базу данных
-    .catch((err) => {
-      if (err instanceof ValidationError) {
-        const errorMessage = Object.values(err.errors)
-          .map((error) => error.message)
-          .join(' ');
-        res
-          .status(BAD_REQUEST_CODE)
-          .send({ message: `Некорректные данные карточки: ${errorMessage}` });
-      } else {
-        res.status(INTERNAL_SERVER_ERROR_CODE).send({
-          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-        });
-      }
-    });
+//   Card.create({ name, link, owner: userId })
+//     .then((card) => card.populate('owner'))
+//     .then((card) => res.status(CREATED_CODE).send(card)) // возврат записанных в базу данных
+//     .catch((err) => {
+//       if (err instanceof ValidationError) {
+//         const errorMessage = Object.values(err.errors)
+//           .map((error) => error.message)
+//           .join(' ');
+//         res
+//           .status(BAD_REQUEST_CODE)
+//           .send({ message: `Некорректные данные карточки: ${errorMessage}` });
+//       } else {
+//         res.status(INTERNAL_SERVER_ERROR_CODE).send({
+//           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
+//         });
+//       }
+//     });
+// };
+
+const createCard = (req, res, next) => {
+  const { name, link } = req.body;
+  console.log(req);
+  // const { _id: userId } = req.user;
+
+  // Card.create({ name, link, owner: userId })
+  //   .then((card) => card.populate('owner'))
+  //   // вернём записанные в базу данные
+  //   .then((card) => res.status(201).send(card))
+  //   // данные не записались, вернём ошибку
+  //   .catch((err) => {
+  //     if (err instanceof ValidationError) {
+  //       const errorMessage = Object.values(err.errors)
+  //         .map((error) => error.message)
+  //         .join(' ');
+  //       next(new Error(`Переданы некорректные данные при создании карточки: ${errorMessage}`));
+  //     } else {
+  //       next(err);
+  //     }
+  //   });
 };
 
 const deleteCard = (req, res) => {
   // функция удаления карточки
   const { cardId } = req.params;
-  Card.findByIdAndRemove(cardId)
-    .orFail()
-    .then((card) => res.send(card))
-    .catch((err) => {
-      if (err instanceof DocumentNotFoundError) {
-        res
-          .status(NOT_FOUND_CODE)
-          .send({ message: 'Карточка с данным id не найдена' });
-        return;
+  const { _id: userId } = req.user;
+
+  Card.findById(cardId)
+    .then((card) => {
+      if (!card) {
+        throw new Error({ message: 'Карточка с данным id не найдена' });
       }
+      console.log(card.owner);
+      if (userId !== card.owner.tiString()) {
+        throw new Error({ message: 'Вы не можете удалить эту карточку' });
+      }
+      return Card.findByIdAndRemove(cardId).then(() =>
+        res.send({ message: 'Карточка удалена' })
+      );
+    })
+    .catch((err) => {
       if (err instanceof CastError) {
-        res.status(BAD_REQUEST_CODE).send({ message: 'Некорректный id карточки' });
+        res
+          .status(BAD_REQUEST_CODE)
+          .send({ message: 'Некорректный id карточки' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
         });
       }
     });
+
+  // Card.findByIdAndRemove(cardId)
+  //   .orFail()
+  //   .then((card) => res.send(card))
+  //   .catch((err) => {
+  //     if (err instanceof DocumentNotFoundError) {
+  //       res
+  //         .status(NOT_FOUND_CODE)
+  //         .send({ message: 'Карточка с данным id не найдена' });
+  //       return;
+  //     }
+  //     if (err instanceof CastError) {
+  //       res.status(BAD_REQUEST_CODE).send({ message: 'Некорректный id карточки' });
+  //     } else {
+  //       res.status(INTERNAL_SERVER_ERROR_CODE).send({
+  //         message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
+  //       });
+  //     }
+  //   });
 };
 
 const handleLikeCard = (req, res, likeOptions) => {
@@ -78,7 +130,9 @@ const handleLikeCard = (req, res, likeOptions) => {
         return;
       }
       if (err instanceof CastError) {
-        res.status(BAD_REQUEST_CODE).send({ message: 'Передан некорректный id карточки' });
+        res
+          .status(BAD_REQUEST_CODE)
+          .send({ message: 'Передан некорректный id карточки' });
       } else {
         res.status(INTERNAL_SERVER_ERROR_CODE).send({
           message: `На сервере произошла ошибка: ${err.name} ${err.message}`,

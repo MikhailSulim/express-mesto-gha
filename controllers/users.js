@@ -124,7 +124,7 @@ exports.updateAvatar = (req, res) => {
 exports.login = (req, res) => {
   const { email, password } = req.body;
 
-  return User.findUserByCredentials(email, password)
+  User.findUserByCredentials(email, password)
     .then((user) => {
       // создадим токен
       const token = jwt.sign(
@@ -135,7 +135,7 @@ exports.login = (req, res) => {
 
       res
         .cookie('jwt', token, {
-          maxAge: 3600000 * 24 * 7,
+          maxAge: 3600000,
           httpOnly: true,
           sameSite: true,
         })
