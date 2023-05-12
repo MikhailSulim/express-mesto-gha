@@ -19,12 +19,20 @@ const { PORT, DB_URL } = require('./utils/config');
 const errorsHandler = require('./middlewares/errorsHandler'); // подключение для централизованной обработки ошибок
 const NotFoundError = require('./errors/NotFoundError'); // кастомный класс ошибки
 
+// безопасность
+const helmet = require('helmet');
+const limiter = require('./middlewares/limiter');
+
 app.use(express.json()); // для взаимодействия с req.body, аналог body-parser
 app.use(cookieParser()); // подключаем парсер кук как мидлвэр, для работы req.cookies
 
 mongoose.connect(DB_URL, {
   // useNewUrlParser: true,
 }); // с новых версий не обязательно добавлять опции
+
+// мидлвэры безопасности
+app.use(helmet()); // для автоматической проставки заголовков безопасности
+app.use(limiter); // для предотвращения ddos атак, ограничитель запросов
 
 app.use(userRouter);
 app.use(cardRouter);
@@ -43,3 +51,4 @@ app.listen(PORT, () => {
 });
 
 // TODO поставить и подключить helmet для безопасности
+// TODO написать валидацию на joi
