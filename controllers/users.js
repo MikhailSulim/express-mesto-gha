@@ -1,8 +1,7 @@
-const { DocumentNotFoundError, CastError, ValidationError } =
-  require('mongoose').Error;
-const User = require('../models/user');
+const { CastError, ValidationError } = require('mongoose').Error;
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const User = require('../models/user');
 
 const { JWT_SECRET } = require('../utils/config');
 
@@ -46,33 +45,31 @@ exports.getUser = (req, res, next) => {
 
 exports.createUser = (req, res, next) => {
   // функция создания нового пользователя
-  const { name, about, avatar, email, password } = req.body;
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
   // хешируем пароль
-  bcrypt.hash(password, 10).then((hash) =>
-    User.create({ name, about, avatar, email, password: hash }) // запись в бд
-      .then((user) => {
-        res.status(CODE_CREATED_201).send(user);
-      })
-      .catch((err) => {
-        if (err.code === 11000) {
-          next(new ConflictError('Пользователь с таким email уже существует'));
-          return;
-        }
+  bcrypt.hash(password, 10).then((hash) => User.create({
+    name, about, avatar, email, password: hash,
+  }) // запись в бд
+    .then((user) => {
+      res.status(CODE_CREATED_201).send(user);
+    })
+    .catch((err) => {
+      if (err.code === 11000) {
+        next(new ConflictError('Пользователь с таким email уже существует'));
+        return;
+      }
 
-        if (err instanceof ValidationError) {
-          const errorMessage = Object.values(err.errors)
-            .map((error) => error.message)
-            .join(' ');
-          next(
-            new BadRequestError(
-              `Некорректные данные пользователя: ${errorMessage}`
-            )
-          );
-        } else {
-          next(err);
-        }
-      })
-  );
+      if (err instanceof ValidationError) {
+        const errorMessage = Object.values(err.errors)
+          .map((error) => error.message)
+          .join(' ');
+        next(new BadRequestError(`Некорректные данные пользователя: ${errorMessage}`));
+      } else {
+        next(err);
+      }
+    }));
 };
 
 const updateProfile = (req, res, next, updData) => {
@@ -83,7 +80,6 @@ const updateProfile = (req, res, next, updData) => {
     new: true,
     runValidators: true,
   })
-
     .then((user) => {
       if (!user) {
         throw new NotFoundError('Пользователь с данным id не найден');
@@ -95,12 +91,7 @@ const updateProfile = (req, res, next, updData) => {
         const errorMessage = Object.values(err.errors)
           .map((error) => error.message)
           .join(' ');
-        next(
-          new BadRequestError(
-            `Некорректные данные пользователя при обновлении профиля ${errorMessage}`
-          )
-        );
-        return;
+        next(new BadRequestError(`Некорректные данные пользователя при обновлении профиля ${errorMessage}`));
       } else {
         next(err);
       }
@@ -128,7 +119,7 @@ exports.login = (req, res, next) => {
       const token = jwt.sign(
         { _id: user._id }, // пейлоуд токена
         JWT_SECRET, // секретный ключ подписи
-        { expiresIn: '7d' } // токен будет просрочен через 7 дней
+        { expiresIn: '7d' }, // токен будет просрочен через 7 дней
       );
       res
         .cookie('jwt', token, {
