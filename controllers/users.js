@@ -6,124 +6,120 @@ const jwt = require('jsonwebtoken');
 
 const { JWT_SECRET } = require('../utils/config');
 
-const {
-  CREATED_CODE,
-  BAD_REQUEST_CODE,
-  NOT_FOUND_CODE,
-  INTERNAL_SERVER_ERROR_CODE,
-} = require('../utils/constants');
+// импорт кастомных классов ошибок
+const BadRequestError = require('../errors/BadRequestError');
+const NotFoundError = require('../errors/NotFoundError');
+const ConflictError = require('../errors/ConflictError');
+
+const { CODE_CREATED_201 } = require('../utils/constants');
 
 // вариант экспорта контроллеров каждому по отдельности
-exports.getUsers = (req, res) => {
+exports.getUsers = (req, res, next) => {
   // функция получения данных всех пользователей
   User.find({})
     .then((users) => {
       res.send({ data: users });
     })
-    .catch((err) =>
-      res.status(INTERNAL_SERVER_ERROR_CODE).send({
-        message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-      })
-    );
+    .catch(next);
 };
 
-exports.getUser = (req, res) => {
+exports.getUser = (req, res, next) => {
   // функция получения данных пользователя по идентификатору
   const { userId } = req.params;
   User.findById(userId)
-    .orFail()
+
     .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Пользователь с таким id не найден');
+      }
+
       res.send({ data: user });
     })
     .catch((err) => {
-      if (err instanceof DocumentNotFoundError) {
-        res
-          .status(NOT_FOUND_CODE)
-          .send({ message: 'Пользователь с таким id не найден' });
-        return;
-      }
       if (err instanceof CastError) {
-        res
-          .status(BAD_REQUEST_CODE)
-          .send({ message: 'Некорректный id пользователя' });
+        next(new BadRequestError('Некорректный id пользователя'));
       } else {
-        res.status(INTERNAL_SERVER_ERROR_CODE).send({
-          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-        });
+        next(err);
       }
     });
 };
 
-exports.createUser = (req, res) => {
+exports.createUser = (req, res, next) => {
   // функция создания нового пользователя
   const { name, about, avatar, email, password } = req.body;
   // хешируем пароль
   bcrypt.hash(password, 10).then((hash) =>
-    User.create({ name, about, avatar, email, password: hash })
+    User.create({ name, about, avatar, email, password: hash }) // запись в бд
       .then((user) => {
-        res.status(CREATED_CODE).send(user);
+        res.status(CODE_CREATED_201).send(user);
       })
       .catch((err) => {
+        if (err.code === 11000) {
+          next(new ConflictError('Пользователь с таким email уже существует'));
+          return;
+        }
+
         if (err instanceof ValidationError) {
           const errorMessage = Object.values(err.errors)
             .map((error) => error.message)
             .join(' ');
-          res.status(BAD_REQUEST_CODE).send({
-            message: `Некорректные данные пользователя: ${errorMessage}`,
-          });
+          next(
+            new BadRequestError(
+              `Некорректные данные пользователя: ${errorMessage}`
+            )
+          );
         } else {
-          res.status(INTERNAL_SERVER_ERROR_CODE).send({
-            message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-          });
+          next(err);
         }
       })
   );
 };
 
-const updateProfile = (req, res, updData) => {
+const updateProfile = (req, res, next, updData) => {
+  // функция обновления профиля пользователя
   const { _id: userId } = req.user;
 
   User.findByIdAndUpdate(userId, updData, {
     new: true,
     runValidators: true,
   })
-    .orFail()
-    .then((user) => res.send(user))
-    .catch((err) => {
-      if (err instanceof DocumentNotFoundError) {
-        res
-          .status(NOT_FOUND_CODE)
-          .send({ message: 'Пользователя с данным id не найден' });
-        return;
+
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError('Пользователь с данным id не найден');
       }
+      res.send({ data: user });
+    })
+    .catch((err) => {
       if (err instanceof ValidationError) {
         const errorMessage = Object.values(err.errors)
           .map((error) => error.message)
           .join(' ');
-        res.status(BAD_REQUEST_CODE).send({
-          message: `Некорректные данные пользователя при обновлении профиля ${errorMessage}`,
-        });
+        next(
+          new BadRequestError(
+            `Некорректные данные пользователя при обновлении профиля ${errorMessage}`
+          )
+        );
+        return;
       } else {
-        res.status(INTERNAL_SERVER_ERROR_CODE).send({
-          message: `На сервере произошла ошибка: ${err.name} ${err.message}`,
-        });
+        next(err);
       }
     });
 };
 
-exports.updateUser = (req, res) => {
+exports.updateUser = (req, res, next) => {
   // функция обновления данных пользователя по его идентификатору
   const { name, about } = req.body;
-  updateProfile(req, res, { name, about });
+  updateProfile(req, res, next, { name, about });
 };
 
-exports.updateAvatar = (req, res) => {
+exports.updateAvatar = (req, res, next) => {
   // функция обновления аватара пользователя по его идентификатору
   const { avatar } = req.body;
-  updateProfile(req, res, { avatar });
+  updateProfile(req, res, next, { avatar });
 };
 
-exports.login = (req, res) => {
+exports.login = (req, res, next) => {
   const { email, password } = req.body;
 
   User.findUserByCredentials(email, password)
@@ -142,9 +138,7 @@ exports.login = (req, res) => {
         })
         .send({ token });
     })
-    .catch((err) => {
-      res.status(401).send({ message: err.message });
-    });
+    .catch(next);
 
   /* Метод bcrypt.compare работает асинхронно,
   поэтому результат нужно вернуть и обработать в следующем then.

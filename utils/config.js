@@ -4,4 +4,4 @@ const {
   DB_URL = 'mongodb://127.0.0.1:27017/mestodb',
 } = process.env;
 
-module.exports = { PORT, JWT_SECRET, DB_URL, };
+module.exports = { PORT, JWT_SECRET, DB_URL };

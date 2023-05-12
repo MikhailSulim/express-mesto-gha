@@ -5,7 +5,6 @@ const userRouter = express.Router();
 const {
   getUsers,
   getUser,
-  // createUser,
   updateUser,
   updateAvatar,
   getCurrentUser,

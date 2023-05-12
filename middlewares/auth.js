@@ -2,12 +2,15 @@ const jwt = require('jsonwebtoken');
 
 const { JWT_SECRET } = require('../utils/config');
 
+// импорт кастомного класса ошибки
+const UnauthorizedError = require('../errors/UnauthorizedError');
+
 module.exports = (req, res, next) => {
   const token = req.cookies.jwt;
 
   // убеждаемся, что токен есть
   if (!token) {
-    return res.status(401).send({ message: 'Необходима авторизация' });
+    return next(new UnauthorizedError('Необходима авторизация'));
   }
 
   let payload; // объявляем эту переменную, чтобы она была видна вне блока try
@@ -16,9 +19,9 @@ module.exports = (req, res, next) => {
   try {
     // пытаемся это сделать
     payload = jwt.verify(token, JWT_SECRET);
-  } catch (error) {
+  } catch (err) {
     // если не получилось
-    return res.status(401).send({ message: 'Необходима авторизация' });
+    return next(new UnauthorizedError('Необходима авторизация'));
   }
 
   req.user = payload; // записываем пейлоуд в объект запроса
