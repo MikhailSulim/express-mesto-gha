@@ -1,5 +1,4 @@
-const { DocumentNotFoundError, CastError, ValidationError } =
-  require('mongoose').Error;
+const { CastError, ValidationError } = require('mongoose').Error;
 
 // импорт кастомных классов ошибок
 const BadRequestError = require('../errors/BadRequestError');
@@ -31,9 +30,7 @@ const createCard = (req, res, next) => {
         const errorMessage = Object.values(err.errors)
           .map((error) => error.message)
           .join(' ');
-        next(
-          new BadRequestError(`Некорректные данные карточки: ${errorMessage}`)
-        );
+        next(new BadRequestError(`Некорректные данные карточки: ${errorMessage}`));
       } else {
         next(err);
       }
@@ -53,9 +50,8 @@ const deleteCard = (req, res, next) => {
       if (userId !== card.owner.toString()) {
         throw new ForbiddenError('Вы не можете удалить эту карточку');
       }
-      return Card.findByIdAndRemove(cardId).then(() =>
-        res.send({ message: 'Карточка удалена' })
-      );
+      return Card.findByIdAndRemove(cardId)
+        .then(() => res.send({ message: 'Карточка удалена' }));
     })
     .catch((err) => {
       if (err instanceof CastError) {
@@ -76,8 +72,8 @@ const handleLikeCard = (req, res, next, likeOptions) => {
       }
 
       return Card.findByIdAndUpdate(cardId, likeOptions, { new: true })
-        .then((card) => card.populate(['owner', 'likes']))
-        .then((card) => res.send(card));
+        .then((updCard) => updCard.populate(['owner', 'likes']))
+        .then((updCard) => res.send(updCard));
     })
     .catch((err) => {
       if (err instanceof CastError) {

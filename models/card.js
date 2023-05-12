@@ -42,7 +42,7 @@ const cardSchema = new mongoose.Schema(
       default: Date.now,
     },
   },
-  { versionKey: false } // отключить создание поля _v
+  { versionKey: false }, // отключить создание поля _v
 );
 
 // создаём модель
